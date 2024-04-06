@@ -15,14 +15,27 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - postgres_hardware_test:/bitnami/postgresql
+      - postgres_test:/bitnami/postgresql
+
+  on_memory_service:
+    container_name: on_memory_service
+    image: 'bitnami/redis:latest'
+    restart: on-failure
+    environment:
+      - REDIS_HOST=on_memory_redis_service
+      - REDIS_PASSWORD=on_memory_redis_password
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+    networks:
+      - outer_network_services
+    ports:
+      - "6379:6379"
 
   gatherer_service:
     container_name: gatherer_service
     restart: on-failure
     build:
       context: ./data_gatherer
-      dockerfile: Dockerfile
     ports:
       - "40111:40111"
     networks:
@@ -33,7 +46,6 @@ services:
     restart: on-failure
     build:
       context: ./fastapi_api
-      dockerfile: email_parsers/Dockerfile
     ports:
       - "22222:22222"
     networks:
@@ -44,7 +56,7 @@ services:
       - DATABASE_URL=postgresql+psycopg2://berkay_wag_user:berkay_wag_user_password@postgres_commercial:5432/wag_database
 
 volumes:
-  postgres_hardware_test:
+  postgres_test:
 
 networks:
   outer_network_services:

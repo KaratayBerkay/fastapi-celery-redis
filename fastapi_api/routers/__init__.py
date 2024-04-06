@@ -1,3 +1,3 @@
-from devices.router import device_router
+from devices.router import devices_route
 
-__all__ = ["device_router"]
+__all__ = ["devices_route"]
