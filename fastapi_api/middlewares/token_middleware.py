@@ -21,7 +21,7 @@ class AuthHeaderMiddleware(BaseHTTPMiddleware):
 def check_if_token_is_not_valid(request) -> bool:
     token_is_not_valid = True
 
-    token = request.headers.get("Authorization")
+    token: str = request.headers.get("Authorization")
     if token:
         return token_is_not_valid
 
