@@ -1,5 +1,9 @@
+import os
 import uvicorn
 import routers
+from configs import Config
+
+from starlette.requests import Request
 
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
@@ -11,7 +15,6 @@ from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import RedirectResponse
 from starlette.exceptions import HTTPException
 
-from configs import Config
 from middlewares.token_middleware import AuthHeaderMiddleware
 
 
@@ -40,14 +43,14 @@ if "components" in openapi_schema:
         "Bearer Auth": {
             "type": "apiKey",
             "in": "header",
-            "name": "evyos-session-key",
+            "name": "Authorization",
             "description": "Enter: **'Bearer &lt;JWT&gt;'**, where JWT is the access token",
         }
     }
 
 for route in api_app.routes:
     path = str(getattr(route, "path"))
-    if route.include_in_schema:
+    if getattr(route, 'include_in_schema'):
         methods = [method.lower() for method in getattr(route, "methods")]
         for method in methods:
             if path not in Config.INSECURE_PATHS:
@@ -68,7 +71,7 @@ for route in api_app.routes:
 api_app.openapi_schema = openapi_schema
 
 
-def exception_handler(exc: HTTPException):
+def exception_handler(request: Request, exc: HTTPException):
     return JSONResponse(
         status_code=status.HTTP_400_BAD_REQUEST, content={"message": exc.__str__()}
     )
@@ -88,6 +91,40 @@ api_app.add_exception_handler(Exception, exception_handler)
 
 
 if __name__ == "__main__":
+    from sqlalchemy import text
+    from models.database import session
+    from models import Users
+
+    if do_alembic := False if os.getenv("DO_ALEMBIC", "False") == "False" else True:
+        try:
+            result = session.execute(
+                text(
+                    "SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = "
+                    "'alembic_version') AS table_existence;"
+                )
+            )
+            if result.first()[0]:
+                session.execute(text("delete from alembic_version;"))
+                session.commit()
+        except Exception as e:
+            print(e)
+        finally:
+            run_command = "python -m alembic stamp head;"
+            run_command += (
+                "python -m alembic revision --autogenerate;python -m alembic upgrade head;"
+            )
+            os.system(run_command)
+
+    super_user: Users = Users.filter(Users.email == "admin@admin.com").first()
+    if not super_user:
+        print("Creating super user")
+        sup_user = Users()
+        sup_user.name = "admin"
+        sup_user.surname = "admin"
+        sup_user.email = "admin@admin.com"
+        sup_user.save_password("admin")
+        sup_user.save()
+
     uvicorn_config = {
         "app": "app:api_app",
         "host": "0.0.0.0",

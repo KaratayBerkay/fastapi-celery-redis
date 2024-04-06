@@ -1,2 +1,3 @@
-socket
-
+celery
+redis
+python-dotenv==0.19.2

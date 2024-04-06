@@ -1,3 +1,4 @@
+import os
 
 
 class Config:
@@ -14,4 +15,5 @@ class Config:
         "/authentication/login",
         "/authentication/logout",
     ]
+    SECRET_KEY = os.getenv("SECRET_KEY", "")
 

@@ -1,21 +1,22 @@
-from fastapi import status
+import typing
+
 from fastapi.routing import APIRouter
-from fastapi.responses import JSONResponse
-from fastapi_api.validations import UserLoginRequest, UserLoginResponse
+from validations import UserLoginRequest, UserLoginResponse
 
-from sqlalchemy import or_
-from models import Users, Tokens
+from models import Users
 
-auth_route = APIRouter(prefix="/auth", tags=["Auth"])
+auth_route = APIRouter(prefix="/authentication", tags=["Auth"])
 auth_route.include_router(auth_route, include_in_schema=False)
 
 
 @auth_route.post("/login", response_model=UserLoginResponse, description="Kullanıcı girişi")
 def auth_login(login: UserLoginRequest):
-    found_user: Users = Users.filter(Users.email == login.email).first()
+    found_user: typing.Optional[Users] = Users.filter(Users.email == login.email).first()
 
     if not found_user:
         raise Exception("Kullanıcı bulunamadı.")
+
+    print('found_user', found_user.id)
 
     if not found_user.check_password(login.password):
         raise Exception("Şifre hatalı.")

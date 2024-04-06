@@ -1,4 +1,5 @@
-from fastapi_api.configs import Config
+import jwt
+from configs import Config
 from starlette import status
 from starlette.exceptions import HTTPException
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -19,10 +20,9 @@ class AuthHeaderMiddleware(BaseHTTPMiddleware):
 
 
 def check_if_token_is_not_valid(request) -> bool:
-    token_is_not_valid = True
-
-    token: str = request.headers.get("Authorization")
-    if token:
-        return token_is_not_valid
-
-    return token_is_not_valid
+    from models import Users
+    if token := request.headers.get("authorization"):
+        decode_jwt = jwt.decode(token, Config.SECRET_KEY, algorithms=["HS256"])
+        if Users.filter(Users.id == decode_jwt.get("user", 0)).first():
+            return False
+    return True

@@ -22,8 +22,8 @@ services:
     image: 'bitnami/redis:latest'
     restart: on-failure
     environment:
-      - REDIS_HOST=on_memory_redis_service
-      - REDIS_PASSWORD=on_memory_redis_password
+      - ALLOW_EMPTY_PASSWORD=yes
+#      - REDIS_HOST=on_memory_redis_service
       - REDIS_PORT=6379
       - REDIS_DB=0
     networks:
@@ -37,22 +37,42 @@ services:
     build:
       context: ./data_gatherer
     ports:
-      - "40113:10000"
+      - "40113:44111"
     networks:
       - distribution_network_services
+    environment:
+      - CELERY_BROKER_URL=redis://on_memory_service:6379/0
+      - CELERY_RESULT_BACKEND=redis://on_memory_service:6379/0
+      - C_FORCE_ROOT=true
+      - TCP_PORT=44111
+      - TCP_HOST=gatherer_service
+
+  dummy_device_container:
+    container_name: dummy_device_container
+    build:
+      context: ./dummy_device
+    networks:
+      - distribution_network_services
+    environment:
+      - TCP_PORT=44111
+      - TCP_HOST=gatherer_service
 
   consumer_service:
     container_name: consumer_service
     restart: on-failure
     build:
       context: ./data_consumer
-    ports:
-      - "40111:40111"
     networks:
       - distribution_network_services
       - database_network_services
     environment:
       - DATABASE_URL=postgresql+psycopg2://test_user:test_password@postgres_test:5432/test_database
+      - CELERY_BROKER_URL=redis://on_memory_service:6379/0
+      - CELERY_RESULT_BACKEND=redis://on_memory_service:6379/0
+      - C_FORCE_ROOT=true
+#      - TCP_PORT=44111
+#      - TCP_HOST=gatherer_service
+
 
   fastapi_service:
     container_name: fastapi_service
@@ -60,13 +80,15 @@ services:
     build:
       context: ./fastapi_api
     ports:
-      - "22222:22222"
+      - "40111:40111"
     networks:
       - database_network_services
     depends_on:
       - postgres_test
     environment:
+      - DO_ALEMBIC=False
       - DATABASE_URL=postgresql+psycopg2://test_user:test_password@postgres_test:5432/test_database
+      - SECRET_KEY=t3sUAmjTGeTgDc6dAUrB41u2SNg0ZHzj4HTjem95y3fRH1nZXOHIBj163kib6iLybT0gLaxq
 
 volumes:
   postgres_test:
