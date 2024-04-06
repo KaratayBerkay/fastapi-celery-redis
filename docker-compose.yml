@@ -1,0 +1,52 @@
+version: '3'
+
+services:
+
+  postgres_test:
+    image: 'bitnami/postgresql:latest'
+    container_name: postgres_test
+    restart: on-failure
+    networks:
+      - outer_network_services
+    environment:
+      - POSTGRES_DB=test_database
+      - POSTGRES_USER=test_user
+      - POSTGRES_PASSWORD=test_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_hardware_test:/bitnami/postgresql
+
+  gatherer_service:
+    container_name: gatherer_service
+    restart: on-failure
+    build:
+      context: ./data_gatherer
+      dockerfile: Dockerfile
+    ports:
+      - "40111:40111"
+    networks:
+      - outer_network_services
+
+  fastapi_service:
+    container_name: fastapi_service
+    restart: on-failure
+    build:
+      context: ./fastapi_api
+      dockerfile: email_parsers/Dockerfile
+    ports:
+      - "22222:22222"
+    networks:
+      - outer_network_services
+    depends_on:
+      - wag_management_service
+    environment:
+      - DATABASE_URL=postgresql+psycopg2://berkay_wag_user:berkay_wag_user_password@postgres_commercial:5432/wag_database
+
+volumes:
+  postgres_hardware_test:
+
+networks:
+  outer_network_services:
+    external: true
+    driver: bridge
