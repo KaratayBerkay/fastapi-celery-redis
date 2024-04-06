@@ -9,6 +9,7 @@ from fastapi import status
 from sqlalchemy import or_
 
 
-devices_route = APIRouter(prefix="/devices", tags=["Devices"])
-devices_route.include_router(devices_route, include_in_schema=False)
+auth_route = APIRouter(prefix="/auth", tags=["Auth"])
+auth_route.include_router(auth_route, include_in_schema=False)
+
 

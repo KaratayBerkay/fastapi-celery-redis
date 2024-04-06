@@ -1,5 +1,4 @@
-from time import perf_counter
-from configs import Config
+from fastapi_api.configs import Config
 from starlette import status
 from starlette.exceptions import HTTPException
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -20,7 +19,6 @@ class AuthHeaderMiddleware(BaseHTTPMiddleware):
 
 
 def check_if_token_is_not_valid(request) -> bool:
-    import fastapi_api.models
     token_is_not_valid = True
 
     token = request.headers.get("Authorization")

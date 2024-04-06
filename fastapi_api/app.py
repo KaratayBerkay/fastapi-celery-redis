@@ -1,4 +1,5 @@
 import uvicorn
+import routers
 
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
@@ -12,7 +13,6 @@ from starlette.exceptions import HTTPException
 
 from configs import Config
 from middlewares.token_middleware import AuthHeaderMiddleware
-import routers
 
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
@@ -25,7 +25,8 @@ async def home():
 
 
 for router in routers.__all__:
-    api_app.include_router(router)
+    if getattr(routers, router):
+        api_app.include_router(getattr(routers, router))
 
 openapi_schema = get_openapi(
         title=Config.TITLE,
@@ -88,11 +89,10 @@ api_app.add_exception_handler(Exception, exception_handler)
 
 if __name__ == "__main__":
     uvicorn_config = {
-        "app": "app:app",
+        "app": "app:api_app",
         "host": "0.0.0.0",
         "port": 40111,
         "log_level": "info",
         "reload": True,
     }
     uvicorn.Server(uvicorn.Config(**uvicorn_config)).run()
-

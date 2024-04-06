@@ -7,7 +7,7 @@ services:
     container_name: postgres_test
     restart: on-failure
     networks:
-      - outer_network_services
+      - database_network_services
     environment:
       - POSTGRES_DB=test_database
       - POSTGRES_USER=test_user
@@ -27,7 +27,7 @@ services:
       - REDIS_PORT=6379
       - REDIS_DB=0
     networks:
-      - outer_network_services
+      - distribution_network_services
     ports:
       - "6379:6379"
 
@@ -37,9 +37,22 @@ services:
     build:
       context: ./data_gatherer
     ports:
+      - "40113:10000"
+    networks:
+      - distribution_network_services
+
+  consumer_service:
+    container_name: consumer_service
+    restart: on-failure
+    build:
+      context: ./data_consumer
+    ports:
       - "40111:40111"
     networks:
-      - outer_network_services
+      - distribution_network_services
+      - database_network_services
+    environment:
+      - DATABASE_URL=postgresql+psycopg2://test_user:test_password@postgres_test:5432/test_database
 
   fastapi_service:
     container_name: fastapi_service
@@ -49,16 +62,15 @@ services:
     ports:
       - "22222:22222"
     networks:
-      - outer_network_services
+      - database_network_services
     depends_on:
-      - wag_management_service
+      - postgres_test
     environment:
-      - DATABASE_URL=postgresql+psycopg2://berkay_wag_user:berkay_wag_user_password@postgres_commercial:5432/wag_database
+      - DATABASE_URL=postgresql+psycopg2://test_user:test_password@postgres_test:5432/test_database
 
 volumes:
   postgres_test:
 
 networks:
-  outer_network_services:
-    external: true
-    driver: bridge
+  database_network_services:
+  distribution_network_services:

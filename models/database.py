@@ -1,10 +1,12 @@
+import os
+
 from sqlalchemy import create_engine
-from sqlalchemy.orm import scoped_session, sessionmaker, DeclarativeBase
+from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 
 
 engine_config = {
-    "url": WagDatabase.DATABASE_URL,
+    "url": os.getenv("DATABASE_URL", ""),
     "pool_size": 10,
     "max_overflow": 0,
     "echo": False,
