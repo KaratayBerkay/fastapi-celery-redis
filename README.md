@@ -1,4 +1,4 @@
-# data_gatherer_study_case
+# Redis + Fastapi + Celery Example
 Data Gatherer Study Case
 
 > This is a study case of a gathers data that collects data from Io devices and stores it in a database.
